@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="royal">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description"
+        content="Rivals Aim-Trainer — 3D Tracking Practice. Move your camera to track the sphere, just like a real aim trainer.">
+    <title>3D Tracking Practice | Rivals Aim-Trainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root,
+        [data-theme="royal"] {
+            --bg: #0b0e1a;
+            --card: #121830;
+            --accent: #4a90ff;
+            --accent-glow: rgba(74, 144, 255, 0.3);
+            --text: #e8ecf4;
+            --text-dim: #8a9bba;
+            --text-muted: #4a5574;
+            --border: rgba(74, 144, 255, 0.1);
+            --tr: 74;
+            --tg: 144;
+            --tb: 255;
+            --hit: #4ecdc4;
+            --miss: #ff6b6b;
+            --subscribe-bg: #ff0033;
+            --subscribe-glow: rgba(255, 0, 51, 0.3);
+            --gradient: linear-gradient(135deg, #4a90ff 0%, #7c5cff 50%, #ffd700 100%);
+            --grid-col: rgba(74, 144, 255, 0.08);
+        }
+
+        [data-theme="sakura"] {
+            --bg: #1a0e1a;
+            --card: #2a1230;
+            --accent: #ff69b4;
+            --accent-glow: rgba(255, 105, 180, 0.3);
+            --text: #f4e8f0;
+            --text-dim: #bb8aab;
+            --text-muted: #74455a;
+            --border: rgba(255, 105, 180, 0.1);
+            --tr: 255;
+            --tg: 105;
+            --tb: 180;
+            --hit: #da70d6;
+            --miss: #ff1493;
+            --subscribe-bg: #ff1493;
+            --subscribe-glow: rgba(255, 20, 147, 0.3);
+            --gradient: linear-gradient(135deg, #ff69b4 0%, #da70d6 50%, #ffd700 100%);
+            --grid-col: rgba(255, 105, 180, 0.08);
+        }
+
+        [data-theme="stealth"] {
+            --bg: #0a0a0a;
+            --card: #161616;
+            --accent: #ff4444;
+            --accent-glow: rgba(255, 68, 68, 0.3);
+            --text: #e0e0e0;
+            --text-dim: #999;
+            --text-muted: #555;
+            --border: rgba(255, 68, 68, 0.08);
+            --tr: 255;
+            --tg: 68;
+            --tb: 68;
+            --hit: #aaa;
+            --miss: #ff2222;
+            --subscribe-bg: #ff2222;
+            --subscribe-glow: rgba(255, 34, 34, 0.3);
+            --gradient: linear-gradient(135deg, #ff4444 0%, #cc2222 50%, #ffffff 100%);
+            --grid-col: rgba(255, 68, 68, 0.06);
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .hdr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.45rem 1rem;
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .hdr__left {
+            display: flex;
+            align-items: center;
+            gap: 0.7rem;
+        }
+
+        .hdr__back {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 0.25rem 0.65rem;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-decoration: none;
+            font-family: inherit;
+        }
+
+        .hdr__back:hover {
+            border-color: var(--accent);
+        }
+
+        .hdr__title {
+            font-family: 'Outfit';
+            font-size: 1rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hdr__stats {
+            display: flex;
+            gap: 0.9rem;
+        }
+
+        .st {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .st__l {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        .st__v {
+            font-family: 'Outfit';
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .st__v--g {
+            color: var(--hit);
+        }
+
+        /* Arena */
+        .arena {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: none;
+            touch-action: none;
+        }
+
+        #c {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Fixed Crosshair */
+        .xhair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 28px;
+            height: 28px;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .xhair::before,
+        .xhair::after {
+            content: '';
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .xhair::before {
+            width: 2px;
+            height: 28px;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .xhair::after {
+            height: 2px;
+            width: 28px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .xhair__dot {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .xhair__ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 1.5px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+
+        /* Click-to-lock prompt */
+        .lock-prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 8;
+            pointer-events: none;
+        }
+
+        .lock-prompt.hidden {
+            display: none;
+        }
+
+        .lock-prompt__title {
+            font-family: 'Outfit';
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .lock-prompt__sub {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* Accuracy Bar */
+        .accbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.04);
+            z-index: 3;
+        }
+
+        .accbar__fill {
+            height: 100%;
+            background: var(--hit);
+            transition: width 0.15s;
+            width: 0%;
+        }
+
+        /* Controls */
+        .ctrls {
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .cg {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .cl {
+            font-size: 0.62rem;
+            color: var(--text-dim);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        .cv {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--accent);
+            min-width: 24px;
+            text-align: right;
+        }
+
+        .cs {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 75px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--bg);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .cs::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .cb {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 0.4rem 0.85rem;
+            border-radius: 7px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .cb:hover {
+            filter: brightness(1.1);
+        }
+
+        .cb--o {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .cb--o:hover {
+            border-color: var(--accent);
+        }
+
+        .pb {
+            display: flex;
+            gap: 3px;
+        }
+
+        .pbtn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 0.28rem 0.55rem;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 0.62rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .pbtn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* Subscribe Overlay */
+        .sub-ov {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.88);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .sub-ov.hidden {
+            display: none;
+        }
+
+        .sub-ov__img {
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
+            animation: mb 3s ease-in-out infinite;
+        }
+
+        @keyframes mb {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(-1deg)
+            }
+
+            50% {
+                transform: translateY(-5px) rotate(1deg)
+            }
+        }
+
+        .sub-ov__t {
+            font-family: 'Outfit';
+            font-size: 1.3rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sub-ov__p {
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            max-width: 380px;
+            line-height: 1.4;
+        }
+
+        .sub-ov__a {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .bsy {
+            padding: 0.5rem 1.2rem;
+            background: var(--subscribe-bg);
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 12px var(--subscribe-glow);
+        }
+
+        .bsn {
+            padding: 0.5rem 1.2rem;
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .inv-btn {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 0.28rem 0.55rem;
+            border-radius: 5px;
+            font-family: inherit;
+            font-size: 0.62rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .inv-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        @media (max-width: 600px) {
+            .ctrls {
+                padding: 0.4rem 0.5rem;
+                gap: 0.5rem;
+            }
+
+            .cs {
+                width: 55px;
+            }
+
+            .st__v {
+                font-size: 0.85rem;
+            }
+
+            .lock-prompt__title {
+                font-size: 0.95rem;
+            }
+
+            .lock-prompt__sub {
+                font-size: 0.65rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Subscribe Overlay -->
+    <div class="sub-ov" id="subOv">
+        <img src="mascot/image_2026-02-24_215323198-removebg-preview.png" alt="Mascot" class="sub-ov__img">
+        <h2 class="sub-ov__t">🎯 3D Tracking Practice</h2>
+        <p class="sub-ov__p">Move your camera to track the sphere — just like a real aim trainer! This is a thank-you
+            for supporting Kaiser. Are you subscribed?</p>
+        <div class="sub-ov__a">
+            <button class="bsy" id="bsy">✓ Yes, I'm subscribed!</button>
+            <a href="https://www.youtube.com/@KaiserEverhart-Adaptation?sub_confirmation=1" target="_blank"
+                rel="noopener" class="bsn" id="bsn">Not yet — Subscribe</a>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="hdr">
+        <div class="hdr__left">
+            <a href="index.html" class="hdr__back">← Back</a>
+            <span class="hdr__title">3D Tracking Practice</span>
+        </div>
+        <div class="hdr__stats">
+            <div class="st"><span class="st__l">Score</span><span class="st__v" id="dScore">0</span></div>
+            <div class="st"><span class="st__l">Accuracy</span><span class="st__v st__v--g" id="dAcc">0%</span></div>
+            <div class="st"><span class="st__l">Streak</span><span class="st__v" id="dStreak">0</span></div>
+            <div class="st"><span class="st__l">Timer</span><span class="st__v" id="dTimer">30s</span></div>
+        </div>
+    </div>
+
+    <!-- Arena -->
+    <div class="arena" id="arena">
+        <canvas id="c"></canvas>
+        <div class="xhair">
+            <div class="xhair__ring"></div>
+            <div class="xhair__dot"></div>
+        </div>
+        <div class="lock-prompt" id="lockPrompt">
+            <div class="lock-prompt__title" id="lockTitle">Click to Lock Camera</div>
+            <div class="lock-prompt__sub" id="lockSub">Move mouse to look around • ESC to unlock</div>
+        </div>
+        <div class="accbar">
+            <div class="accbar__fill" id="accBar"></div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="ctrls">
+        <div class="cg">
+            <span class="cl">Sens</span>
+            <input type="range" class="cs" id="sensSlider" min="1" max="20" value="6">
+            <span class="cv" id="sensVal">6</span>
+        </div>
+        <div class="cg">
+            <span class="cl">Speed</span>
+            <input type="range" class="cs" id="speedSlider" min="1" max="10" value="4">
+            <span class="cv" id="speedVal">4</span>
+        </div>
+        <div class="cg">
+            <span class="cl">Time</span>
+            <input type="range" class="cs" id="durSlider" min="10" max="120" value="30" step="5">
+            <span class="cv" id="durVal">30s</span>
+        </div>
+        <div class="cg">
+            <span class="cl">Pattern</span>
+            <div class="pb" id="patBtns">
+                <button class="pbtn active" data-p="orbit">Orbit</button>
+                <button class="pbtn" data-p="helix">Helix</button>
+                <button class="pbtn" data-p="figure8">Fig-8</button>
+                <button class="pbtn" data-p="chaos">Chaos</button>
+            </div>
+        </div>
+        <button class="inv-btn" id="invBtn">Invert Y</button>
+        <button class="cb" id="startBtn">▶ Start</button>
+        <button class="cb cb--o" id="resetBtn">↻ Reset</button>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            // ---- Theme ----
+            try { const s = JSON.parse(localStorage.getItem('rivals-aim-trainer')); if (s && s.theme) document.documentElement.setAttribute('data-theme', s.theme); } catch (e) { }
+
+            // ---- Subscribe ----
+            const SUB_KEY = 'rivals-subscribed';
+            const subOv = document.getElementById('subOv');
+            const isSub = () => { try { return localStorage.getItem(SUB_KEY) === 'true'; } catch (e) { return false; } };
+            const doSub = () => { try { localStorage.setItem(SUB_KEY, 'true'); } catch (e) { } subOv.classList.add('hidden'); };
+            if (isSub()) subOv.classList.add('hidden');
+            document.getElementById('bsy').onclick = () => {
+                doSub();
+                const d = document.createElement('div');
+                d.style.cssText = 'position:fixed;inset:0;z-index:250;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.6rem;';
+                d.innerHTML = '<img src="mascot/image_2026-02-24_215419391-removebg-preview.png" style="width:100px;height:100px;object-fit:contain;"><p style="font-family:Outfit;font-size:1.3rem;font-weight:800;color:var(--accent)">Thank you!! 💖🎉</p><p style="font-size:0.8rem;color:var(--text-dim)">You\'re amazing! Click the arena to lock your camera~</p>';
+                document.body.appendChild(d);
+                setTimeout(() => d.remove(), 2200);
+            };
+            document.getElementById('bsn').onclick = () => setTimeout(doSub, 2500);
+
+            // ---- Canvas ----
+            const canvas = document.getElementById('c');
+            const ctx = canvas.getContext('2d');
+            const arenaEl = document.getElementById('arena');
+            const lockPrompt = document.getElementById('lockPrompt');
+
+            function resize() {
+                const r = arenaEl.getBoundingClientRect();
+                canvas.width = r.width * devicePixelRatio;
+                canvas.height = r.height * devicePixelRatio;
+                canvas.style.width = r.width + 'px';
+                canvas.style.height = r.height + 'px';
+                ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // ---- DOM refs ----
+            const dScore = document.getElementById('dScore');
+            const dAcc = document.getElementById('dAcc');
+            const dStreak = document.getElementById('dStreak');
+            const dTimer = document.getElementById('dTimer');
+            const accBar = document.getElementById('accBar');
+            const sensSlider = document.getElementById('sensSlider');
+            const speedSlider = document.getElementById('speedSlider');
+            const durSlider = document.getElementById('durSlider');
+            const sensVal = document.getElementById('sensVal');
+            const speedVal = document.getElementById('speedVal');
+            const durVal = document.getElementById('durVal');
+            const startBtn = document.getElementById('startBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const patBtns = document.querySelectorAll('.pbtn');
+
+            // ---- State ----
+            let running = false, animId = null, timerInt = null, accInt = null;
+            let score = 0, totalChecks = 0, hitChecks = 0, streak = 0, bestStreak = 0, timeLeft = 30;
+            let sensitivity = 6, speed = 4, pattern = 'orbit', t = 0;
+            let locked = false; // pointer lock
+            let invertY = false;
+            const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+            // Invert Y button
+            const invBtn = document.getElementById('invBtn');
+            invBtn.onclick = () => { invertY = !invertY; invBtn.classList.toggle('active', invertY); };
+
+            // Mobile-friendly prompt
+            if (isMobile) {
+                document.getElementById('lockTitle').textContent = 'Drag to Look Around';
+                document.getElementById('lockSub').textContent = 'Swipe to move camera • Track the sphere';
+            }
+
+            // Camera: yaw (left-right) and pitch (up-down) in radians
+            let camYaw = 0, camPitch = 0;
+
+            // Sphere world position (3D)
+            let sx = 0, sy = 0, sz = 80;
+            const SPHERE_R = 4; // world radius
+
+            // FOV
+            const VFOV = Math.PI / 3; // 60 degrees vertical FOV
+
+            // Stars (fewer on mobile for perf)
+            let stars = [];
+            const STAR_COUNT = isMobile ? 60 : 120;
+            function initStars() {
+                stars = [];
+                for (let i = 0; i < STAR_COUNT; i++) {
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    const dist = 500 + Math.random() * 500;
+                    stars.push({
+                        x: Math.sin(phi) * Math.cos(theta) * dist,
+                        y: Math.sin(phi) * Math.sin(theta) * dist,
+                        z: Math.cos(phi) * dist,
+                        brightness: 0.15 + Math.random() * 0.4
+                    });
+                }
+            }
+            initStars();
+
+            // Grid floor points (world space, y = 30)
+            const FLOOR_Y = 30;
+
+            // ---- Controls ----
+            sensSlider.oninput = () => { sensitivity = +sensSlider.value; sensVal.textContent = sensitivity; };
+            speedSlider.oninput = () => { speed = +speedSlider.value; speedVal.textContent = speed; };
+            durSlider.oninput = () => { const v = +durSlider.value; durVal.textContent = v + 's'; if (!running) { timeLeft = v; dTimer.textContent = v + 's'; } };
+            patBtns.forEach(b => b.onclick = () => { patBtns.forEach(x => x.classList.remove('active')); b.classList.add('active'); pattern = b.dataset.p; });
+
+            // ---- Pointer Lock ----
+            arenaEl.addEventListener('click', () => {
+                if (!locked) arenaEl.requestPointerLock();
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                locked = document.pointerLockElement === arenaEl;
+                lockPrompt.classList.toggle('hidden', locked);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!locked) return;
+                const sens = sensitivity * 0.0004;
+                camYaw += e.movementX * sens;
+                const pitchDir = invertY ? -1 : 1;
+                camPitch += e.movementY * sens * pitchDir;
+                camPitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camPitch));
+            });
+
+            // ---- Touch support (mobile — no pointer lock, use drag) ----
+            let touchStartX = 0, touchStartY = 0;
+            arenaEl.addEventListener('touchstart', e => {
+                e.preventDefault();
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                lockPrompt.classList.add('hidden');
+            }, { passive: false });
+
+            arenaEl.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const dx = e.touches[0].clientX - touchStartX;
+                const dy = e.touches[0].clientY - touchStartY;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                const sens = sensitivity * 0.0008;
+                const pitchDir = invertY ? -1 : 1;
+                camYaw += dx * sens;
+                camPitch += dy * sens * pitchDir;
+                camPitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, camPitch));
+            }, { passive: false });
+
+            // ---- 3D Camera Projection (optimized: cache trig per frame) ----
+            let _cosY = 1, _sinY = 0, _cosP = 1, _sinP = 0, _focalLen = 400;
+            function updateCameraCache(h) {
+                _cosY = Math.cos(-camYaw); _sinY = Math.sin(-camYaw);
+                _cosP = Math.cos(-camPitch); _sinP = Math.sin(-camPitch);
+                _focalLen = (h / 2) / Math.tan(VFOV / 2);
+            }
+
+            function worldToScreen(wx, wy, wz, w, h) {
+                const rx = wx * _cosY + wz * _sinY;
+                const rz = -wx * _sinY + wz * _cosY;
+                const fy = wy * _cosP - rz * _sinP;
+                const fz = wy * _sinP + rz * _cosP;
+                if (fz <= 0.5) return null;
+                const invFz = _focalLen / fz;
+                return { x: w / 2 + rx * invFz, y: h / 2 - fy * invFz, z: fz, scale: invFz };
+            }
+
+            // ---- Sphere Movement (world space) ----
+            function updateSphere(dt) {
+                const spd = speed / 4;
+                t += dt * 0.001 * spd;
+
+                // All patterns orbit around a center point ~80 units in front
+                const cx = 0, cy = 0, cz = 80;
+
+                switch (pattern) {
+                    case 'orbit': {
+                        const rx = 35, ry = 20, rz = 30;
+                        sx = cx + Math.cos(t * 1.0) * rx + Math.sin(t * 0.4) * 10;
+                        sy = cy + Math.sin(t * 0.7) * ry;
+                        sz = cz + Math.sin(t * 0.6) * rz;
+                        break;
+                    }
+                    case 'helix': {
+                        const hr = 30;
+                        sx = cx + Math.cos(t * 1.3) * hr;
+                        sy = cy + Math.sin(t * 1.3) * hr * 0.6;
+                        sz = cz + Math.sin(t * 0.3) * 40;
+                        break;
+                    }
+                    case 'figure8': {
+                        const a = 35;
+                        const denom = 1 + Math.sin(t * 0.7) ** 2;
+                        sx = cx + a * Math.cos(t * 0.7) / denom;
+                        sy = cy + a * Math.sin(t * 0.7) * Math.cos(t * 0.7) / denom * 0.6;
+                        sz = cz + Math.sin(t * 0.4) * 35;
+                        break;
+                    }
+                    case 'chaos': {
+                        const cs = 0.012 * spd;
+                        const sigma = 10, rho = 28, beta = 8 / 3;
+                        const lx = (sx - cx) / 3, ly = (sy - cy) / 3, lz = (sz - cz) / 3;
+                        const dlx = sigma * (ly - lx);
+                        const dly = lx * (rho - lz) - ly;
+                        const dlz = lx * ly - beta * lz;
+                        sx += dlx * cs * 3;
+                        sy += dly * cs * 2;
+                        sz += dlz * cs * 2;
+                        sx = Math.max(cx - 50, Math.min(cx + 50, sx));
+                        sy = Math.max(cy - 35, Math.min(cy + 35, sy));
+                        sz = Math.max(cz - 40, Math.min(cz + 60, sz));
+                        break;
+                    }
+                }
+            }
+
+            // ---- Rendering (optimized: cached theme colors) ----
+            let cachedTC = { r: 74, g: 144, b: 255 };
+            function cacheTC() {
+                const s = getComputedStyle(document.documentElement);
+                cachedTC = { r: parseInt(s.getPropertyValue('--tr')) || 74, g: parseInt(s.getPropertyValue('--tg')) || 144, b: parseInt(s.getPropertyValue('--tb')) || 255 };
+            }
+            cacheTC(); // cache once at load
+            // Re-cache when theme changes (observed via attribute)
+            new MutationObserver(cacheTC).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+            function render() {
+                const w = arenaEl.clientWidth, h = arenaEl.clientHeight;
+                ctx.clearRect(0, 0, w, h);
+                updateCameraCache(h);
+                const tc = cachedTC;
+
+                drawStars(w, h, tc);
+                drawFloor(w, h, tc);
+                if (running) drawSphere3D(w, h, tc);
+                drawDistIndicator(w, h, tc);
+            }
+
+            function drawStars(w, h, tc) {
+                // Batch all stars with a single fillStyle (slight alpha variation baked into size)
+                ctx.fillStyle = `rgba(${tc.r},${tc.g},${tc.b},0.25)`;
+                for (let i = 0, len = stars.length; i < len; i++) {
+                    const s = stars[i];
+                    const p = worldToScreen(s.x, s.y, s.z, w, h);
+                    if (!p || p.x < -10 || p.x > w + 10 || p.y < -10 || p.y > h + 10) continue;
+                    const r = Math.max(0.5, 1.2 * p.scale);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, r, 0, 6.283);
+                    ctx.fill();
+                }
+            }
+
+            const GRID_COUNT = isMobile ? 10 : 16;
+            const GRID_SPACING = isMobile ? 20 : 15;
+            const GRID_Z_LINES = isMobile ? 6 : 10;
+            function drawFloor(w, h, tc) {
+                ctx.strokeStyle = `rgba(${tc.r},${tc.g},${tc.b},0.07)`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = -GRID_COUNT; i <= GRID_COUNT; i++) {
+                    const p1 = worldToScreen(i * GRID_SPACING, FLOOR_Y, 10, w, h);
+                    const p2 = worldToScreen(i * GRID_SPACING, FLOOR_Y, 160, w, h);
+                    if (p1 && p2) { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); }
+                }
+                for (let j = 1; j <= GRID_Z_LINES; j++) {
+                    const z = j * (160 / GRID_Z_LINES);
+                    const p1 = worldToScreen(-GRID_COUNT * GRID_SPACING, FLOOR_Y, z, w, h);
+                    const p2 = worldToScreen(GRID_COUNT * GRID_SPACING, FLOOR_Y, z, w, h);
+                    if (p1 && p2) { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); }
+                }
+                ctx.stroke();
+            }
+
+            function drawSphere3D(w, h, tc) {
+                const p = worldToScreen(sx, sy, sz, w, h);
+                if (!p) return;
+                const r = SPHERE_R * p.scale;
+                if (r < 1) return;
+
+                const depthFade = Math.max(0.25, 1 - p.z / 200);
+
+                // Shadow on floor (skip on mobile for perf)
+                if (!isMobile) {
+                    const floorP = worldToScreen(sx, FLOOR_Y, sz, w, h);
+                    if (floorP) {
+                        const sr = SPHERE_R * floorP.scale * 1.2;
+                        ctx.fillStyle = `rgba(0,0,0,0.1)`;
+                        ctx.beginPath();
+                        ctx.ellipse(floorP.x, floorP.y, sr, sr * 0.25, 0, 0, 6.283);
+                        ctx.fill();
+                    }
+                }
+
+                // Main sphere — simple radial gradient, NO shadowBlur (expensive)
+                const g = ctx.createRadialGradient(p.x - r * 0.3, p.y - r * 0.3, r * 0.05, p.x, p.y, r);
+                g.addColorStop(0, `rgba(${Math.min(255, tc.r + 80)},${Math.min(255, tc.g + 80)},${Math.min(255, tc.b + 80)},${depthFade})`);
+                g.addColorStop(0.6, `rgba(${tc.r},${tc.g},${tc.b},${depthFade})`);
+                g.addColorStop(1, `rgba(${tc.r >> 1},${tc.g >> 1},${tc.b >> 1},${depthFade * 0.6})`);
+                ctx.fillStyle = g;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, 6.283);
+                ctx.fill();
+
+                // Specular highlight
+                const sg = ctx.createRadialGradient(p.x - r * 0.25, p.y - r * 0.3, 0, p.x - r * 0.25, p.y - r * 0.3, r * 0.5);
+                sg.addColorStop(0, `rgba(255,255,255,${0.4 * depthFade})`);
+                sg.addColorStop(1, 'rgba(255,255,255,0)');
+                ctx.fillStyle = sg;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r, 0, 6.283);
+                ctx.fill();
+
+                // Thin outline
+                ctx.strokeStyle = `rgba(${tc.r},${tc.g},${tc.b},${depthFade * 0.3})`;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, r + 2, 0, 6.283);
+                ctx.stroke();
+            }
+
+            // Direction indicator when sphere is off-screen
+            function drawDistIndicator(w, h, tc) {
+                if (!running) return;
+                const p = worldToScreen(sx, sy, sz, w, h);
+                if (p && p.x > 20 && p.x < w - 20 && p.y > 20 && p.y < h - 20) return; // on screen
+
+                // Draw arrow pointing toward sphere
+                const dx = sx, dy = sy, dz = sz;
+                const cosY = Math.cos(-camYaw), sinY = Math.sin(-camYaw);
+                let rx = dx * cosY + dz * sinY;
+                let rz = -dx * sinY + dz * cosY;
+                const cosP = Math.cos(-camPitch), sinP = Math.sin(-camPitch);
+                let fy = dy * cosP - rz * sinP;
+                let fz = dy * sinP + rz * cosP;
+
+                const angle = Math.atan2(-fy, rx);
+                const margin = 40;
+                const cx = w / 2 + Math.cos(angle) * (w / 2 - margin);
+                const cy = h / 2 + Math.sin(angle) * (h / 2 - margin);
+
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(angle);
+                ctx.fillStyle = `rgba(${tc.r},${tc.g},${tc.b},0.6)`;
+                ctx.beginPath();
+                ctx.moveTo(12, 0);
+                ctx.lineTo(-6, -6);
+                ctx.lineTo(-6, 6);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // ---- Accuracy Check ----
+            function checkAcc() {
+                if (!running) return;
+                const w = arenaEl.clientWidth, h = arenaEl.clientHeight;
+                const p = worldToScreen(sx, sy, sz, w, h);
+                if (!p) { streak = 0; dStreak.textContent = streak; return; }
+
+                totalChecks++;
+                const r = SPHERE_R * p.scale;
+                // Distance from screen center (crosshair) to sphere center
+                const dx = w / 2 - p.x, dy = h / 2 - p.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                const hitR = r + 8; // some forgiveness
+
+                if (dist <= hitR) {
+                    hitChecks++;
+                    streak++;
+                    if (streak > bestStreak) bestStreak = streak;
+                    score += Math.max(1, Math.ceil(10 * (1 - dist / hitR)));
+                } else {
+                    streak = 0;
+                }
+
+                const acc = totalChecks > 0 ? Math.round((hitChecks / totalChecks) * 100) : 0;
+                dScore.textContent = score;
+                dAcc.textContent = acc + '%';
+                dStreak.textContent = streak;
+                accBar.style.width = acc + '%';
+            }
+
+            // ---- Game Loop ----
+            let lastT = 0;
+
+            function loop(ts) {
+                if (!running) return;
+                const dt = lastT ? ts - lastT : 16;
+                lastT = ts;
+                updateSphere(dt);
+                render();
+                animId = requestAnimationFrame(loop);
+            }
+
+            function idleLoop() {
+                if (running) return;
+                render();
+                requestAnimationFrame(idleLoop);
+            }
+
+            function start() {
+                if (running) return;
+                running = true;
+                score = 0; totalChecks = 0; hitChecks = 0; streak = 0; t = 0; lastT = 0;
+                timeLeft = parseInt(durSlider.value);
+                if (pattern === 'chaos') { sx = 2; sy = 2; sz = 82; }
+                camYaw = 0; camPitch = 0;
+                dScore.textContent = '0'; dAcc.textContent = '0%'; dStreak.textContent = '0';
+                accBar.style.width = '0%';
+                startBtn.textContent = '⏸ Running'; startBtn.disabled = true;
+
+                accInt = setInterval(checkAcc, 100);
+                timerInt = setInterval(() => {
+                    timeLeft--;
+                    dTimer.textContent = timeLeft + 's';
+                    if (timeLeft <= 0) end();
+                }, 1000);
+
+                animId = requestAnimationFrame(loop);
+            }
+
+            function end() {
+                running = false;
+                cancelAnimationFrame(animId);
+                clearInterval(timerInt);
+                clearInterval(accInt);
+                startBtn.textContent = '▶ Start'; startBtn.disabled = false;
+                if (document.pointerLockElement) document.exitPointerLock();
+
+                const acc = totalChecks > 0 ? Math.round((hitChecks / totalChecks) * 100) : 0;
+                const msg = acc >= 80 ? '🔥 Incredible tracking!' : acc >= 60 ? '💪 Solid aim!' : acc >= 40 ? '🎯 Keep at it!' : '👀 Try lowering the speed!';
+
+                const ov = document.createElement('div');
+                ov.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.4rem;cursor:default;';
+                ov.innerHTML = `
+        <img src="mascot/image_2026-02-24_215451508-removebg-preview.png" style="width:90px;height:90px;object-fit:contain;">
+        <h2 style="font-family:Outfit;font-size:1.5rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Round Complete!</h2>
+        <div style="display:flex;gap:1.8rem;margin:0.3rem 0;">
+          <div style="text-align:center"><div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Score</div><div style="font-family:Outfit;font-size:1.7rem;font-weight:800;color:var(--accent)">${score}</div></div>
+          <div style="text-align:center"><div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Accuracy</div><div style="font-family:Outfit;font-size:1.7rem;font-weight:800;color:var(--hit)">${acc}%</div></div>
+          <div style="text-align:center"><div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Best Streak</div><div style="font-family:Outfit;font-size:1.7rem;font-weight:800;color:var(--accent)">${bestStreak}</div></div>
+        </div>
+        <p style="font-size:0.75rem;color:var(--text-dim)">${msg}</p>
+        <button style="margin-top:0.3rem;padding:0.45rem 1.2rem;background:var(--accent);color:#fff;border:none;border-radius:7px;font-family:inherit;font-size:0.8rem;font-weight:700;cursor:pointer;">Play Again</button>
+      `;
+                ov.querySelector('button').onclick = () => ov.remove();
+                document.body.appendChild(ov);
+                requestAnimationFrame(idleLoop);
+            }
+
+            function reset() {
+                running = false;
+                cancelAnimationFrame(animId);
+                clearInterval(timerInt);
+                clearInterval(accInt);
+                if (document.pointerLockElement) document.exitPointerLock();
+                score = 0; totalChecks = 0; hitChecks = 0; streak = 0; bestStreak = 0; t = 0;
+                camYaw = 0; camPitch = 0;
+                timeLeft = parseInt(durSlider.value);
+                dScore.textContent = '0'; dAcc.textContent = '0%'; dStreak.textContent = '0';
+                dTimer.textContent = timeLeft + 's'; accBar.style.width = '0%';
+                startBtn.textContent = '▶ Start'; startBtn.disabled = false;
+            }
+
+            startBtn.onclick = start;
+            resetBtn.onclick = reset;
+
+            // Init
+            dTimer.textContent = durSlider.value + 's';
+            requestAnimationFrame(idleLoop);
+
+        })();
+    </script>
+</body>
+
+</html>
